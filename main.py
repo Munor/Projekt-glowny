@@ -8,30 +8,27 @@ db = SQLAlchemy(app)
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(10))
-    category = db.Column(db.String(50))
-    amount = db.Column(db.Float)
+    type = db.Column(db.String(10), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(200))
     receipt = db.Column(db.String(200))  # Dowód zakupu
 
 @app.route('/')
 def index():
-    transactions = Transaction.query.all()
-    balance = sum([t.amount if t.type == 'income' else -t.amount for t in transactions])
+    transactions = Transaction.query.order_by(Transaction.id.desc()).all()
+    balance = sum(t.amount if t.type == 'income' else -t.amount for t in transactions)
     return render_template('index.html', transactions=transactions, balance=balance)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        t_type = request.form['type']
-        category = request.form['category']
-        amount = float(request.form['amount'])
-        description = request.form['description']
-        receipt = request.form['receipt']
         new_transaction = Transaction(
-            type=t_type, category=category,
-            amount=amount, description=description,
-            receipt=receipt
+            type=request.form['type'],
+            category=request.form['category'],
+            amount=float(request.form['amount']),
+            description=request.form['description'],
+            receipt=request.form['receipt']
         )
         db.session.add(new_transaction)
         db.session.commit()

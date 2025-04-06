@@ -8,24 +8,25 @@ db = SQLAlchemy(app)
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(10))
-    category = db.Column(db.String(50))
-    amount = db.Column(db.Float)
+    type = db.Column(db.String(10), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(200))
 
 @app.route('/')
 def index():
-    transactions = Transaction.query.all()
+    transactions = Transaction.query.order_by(Transaction.id.desc()).all()
     return render_template('index.html', transactions=transactions)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        t_type = request.form['type']
-        category = request.form['category']
-        amount = float(request.form['amount'])
-        description = request.form['description']
-        new_transaction = Transaction(type=t_type, category=category, amount=amount, description=description)
+        new_transaction = Transaction(
+            type=request.form['type'],
+            category=request.form['category'],
+            amount=float(request.form['amount']),
+            description=request.form['description']
+        )
         db.session.add(new_transaction)
         db.session.commit()
         return redirect('/')
